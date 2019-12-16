@@ -2,11 +2,13 @@
 
 A (coverage-)guided fuzzer for dynamic language interpreters based on a custom intermediate language ("FuzzIL") which can be mutated and translated to JavaScript.
 
-Written and maintained by Samuel Groß, <saelo@google.com>.
+一个以覆盖率为指导的动态语言解释器，它基于一个传统的中介语言“FuzzILli”（它能对JavaScript进行mutate和translate）。
 
 ## Usage
 
 The basic steps to use this fuzzer are:
+
+基本使用步骤如下：
 
 1. Download the source code for one of the supported JavaScript engines (currently [JavaScriptCore](https://github.com/WebKit/webkit), [Spidermonkey](https://github.com/mozilla/gecko-dev), and [v8](https://github.com/v8/v8)).
 2. Apply the corresponding patch from the [Targets/](Targets/) directory. Also see the README.md in that directory.
@@ -18,15 +20,23 @@ The basic steps to use this fuzzer are:
 
 Check out [main.swift](Sources/FuzzilliCli/main.swift) to see a usage example of the Fuzzilli library and play with the various configuration options. Next, take a look at [Fuzzer.swift](Sources/Fuzzilli/Fuzzer.swift) for the highlevel fuzzing logic. From there dive into any part that seems interesting.
 
+检查 [main.swift](Sources/FuzzilliCli/main.swift) 来看一个Fuzzilli库的使用例，并且了解各种配置。
+
+之后，看一下[Fuzzer.swift](Sources/Fuzzilli/Fuzzer.swift)来了解高层的fuzzing逻辑。
+
+
 Patches, additions, other contributions etc. to this project are very welcome! However, do quickly check [the notes for contributors](CONTRIBUTING.md). Fuzzilli roughly follows [Google's code style guide for swift](https://google.github.io/swift/).
+欢迎贡献和添加发现的BUG列表。
 
 It would be much appreciated if you could send a short note (possibly including a CVE number) to <saelo@google.com> or open a pull request for any vulnerability found with the help of this project so it can be included in the [bug showcase](#bug-showcase) section. Other than that you can of course claim any bug bounty, CVE credits, etc. for the vulnerabilities :)
 
 ## Concept
 
 When fuzzing for core interpreter bugs, e.g. in JIT compilers, semantic correctness of generated programs becomes a concern. This is in contrast to most other scenarios, e.g. fuzzing of runtime APIs, in which case semantic correctness can easily be worked around by wrapping the generated code in try-catch constructs. There are different possibilities to achieve an acceptable rate of semantically correct samples, one of them being a mutational approach in which all samples in the corpus are also semantically valid. In that case, each mutation only has a small chance of turning a valid sample into an invalid one.
+当对core interpreter（例如JIT编译器） bugs进行fuzzing时，生成器程序的语义正确性是一个问题。它与其他大多数的场景不同，比如对runtime APIs进行fuzzing，通过把生成的代码包裹在try-catch中就可以很容易地解决语义正确性问题。实现可接受的语义正确样本率有不同的可能性，其中之一是一种变异方法，要求其语料库中的所有样本都是语义有效的。在这种情况下，每个突变只有很小的机会将有效样本变成无效样本。
 
 To implement a mutation-based JavaScript fuzzer, mutations to JavaScript code have to be defined. Instead of mutating the AST, or other syntactic elements of a program, a custom intermediate language (IL) is defined on which mutations to the control and data flow of a program can more directly be performed. This IL is afterwards translated to JavaScript for execution. The intermediate language looks roughly as follows:
+
 
     v0 <− LoadInt '0'
     v1 <− LoadInt '10'
