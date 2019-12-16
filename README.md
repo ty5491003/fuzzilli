@@ -2,11 +2,9 @@
 
 A (coverage-)guided fuzzer for dynamic language interpreters based on a custom intermediate language ("FuzzIL") which can be mutated and translated to JavaScript.
 
-一个以覆盖率为指导的动态语言解释器，它基于一个传统的中介语言“FuzzILli”（它能对JavaScript进行mutate和translate）。
+一个以覆盖率为指导的动态语言解释器，它基于一个传统的中介语言“FuzzILli”，该语言能对JavaScript进行mutate和translate.
 
 ## Usage
-
-The basic steps to use this fuzzer are:
 
 基本使用步骤如下：
 
@@ -18,25 +16,15 @@ The basic steps to use this fuzzer are:
 
 ### Hacking
 
-Check out [main.swift](Sources/FuzzilliCli/main.swift) to see a usage example of the Fuzzilli library and play with the various configuration options. Next, take a look at [Fuzzer.swift](Sources/Fuzzilli/Fuzzer.swift) for the highlevel fuzzing logic. From there dive into any part that seems interesting.
+检查 [main.swift](Sources/FuzzilliCli/main.swift) 来看一个Fuzzilli库的使用例，并且了解各种配置.
 
-检查 [main.swift](Sources/FuzzilliCli/main.swift) 来看一个Fuzzilli库的使用例，并且了解各种配置。
-
-之后，看一下[Fuzzer.swift](Sources/Fuzzilli/Fuzzer.swift)来了解高层的fuzzing逻辑。
-
-
-Patches, additions, other contributions etc. to this project are very welcome! However, do quickly check [the notes for contributors](CONTRIBUTING.md). Fuzzilli roughly follows [Google's code style guide for swift](https://google.github.io/swift/).
-欢迎贡献和添加发现的BUG列表。
-
-It would be much appreciated if you could send a short note (possibly including a CVE number) to <saelo@google.com> or open a pull request for any vulnerability found with the help of this project so it can be included in the [bug showcase](#bug-showcase) section. Other than that you can of course claim any bug bounty, CVE credits, etc. for the vulnerabilities :)
+之后，看一下[Fuzzer.swift](Sources/Fuzzilli/Fuzzer.swift)来了解高层的fuzzing逻辑.
 
 ## Concept
 
-When fuzzing for core interpreter bugs, e.g. in JIT compilers, semantic correctness of generated programs becomes a concern. This is in contrast to most other scenarios, e.g. fuzzing of runtime APIs, in which case semantic correctness can easily be worked around by wrapping the generated code in try-catch constructs. There are different possibilities to achieve an acceptable rate of semantically correct samples, one of them being a mutational approach in which all samples in the corpus are also semantically valid. In that case, each mutation only has a small chance of turning a valid sample into an invalid one.
-当对core interpreter（例如JIT编译器） bugs进行fuzzing时，生成器程序的语义正确性是一个问题。它与其他大多数的场景不同，比如对runtime APIs进行fuzzing，通过把生成的代码包裹在try-catch中就可以很容易地解决语义正确性问题。实现可接受的语义正确样本率有不同的可能性，其中之一是一种变异方法，要求其语料库中的所有样本都是语义有效的。在这种情况下，每个突变只有很小的机会将有效样本变成无效样本。
+当对core interpreter（例如JIT编译器） bugs进行fuzzing时，生成器程序的语义正确性是一个问题. 它与其他大多数的场景不同，比如对runtime APIs进行fuzzing，通过把生成的代码包裹在try-catch中就可以很容易地解决语义正确性问题. 实现可接受的语义正确样本率有不同的可能性，其中之一是一种变异方法，要求其语料库中的所有样本都是语义有效的. 在这种情况下，每个突变只有很小的机会将有效样本变成无效样本. 
 
-To implement a mutation-based JavaScript fuzzer, mutations to JavaScript code have to be defined. Instead of mutating the AST, or other syntactic elements of a program, a custom intermediate language (IL) is defined on which mutations to the control and data flow of a program can more directly be performed. This IL is afterwards translated to JavaScript for execution. The intermediate language looks roughly as follows:
-
+为了实现一个基于变异的JS fuzzer，针对JS代码的mutations必须被定义. 自定义中间语言(IL)被定义为可以更直接地执行对程序的控制和数据流进行更改的语言，而不是对程序的AST或其他语法元素进行更改. 这个IL代码在之后会被翻译成JS代码来执行. 关于IL的概览如下：
 
     v0 <− LoadInt '0'
     v1 <− LoadInt '10'
@@ -51,7 +39,7 @@ To implement a mutation-based JavaScript fuzzer, mutations to JavaScript code ha
     v9 <− LoadGlobal 'console'
     v10 <− CallMethod v9, 'log', [v8]
 
-Which can e.g. be trivially translated to the following JavaScript code:
+上面的IL代码可以被翻译为下面的JS代码：
 
     const v0 = 0;
     const v1 = 10;
@@ -66,7 +54,7 @@ Which can e.g. be trivially translated to the following JavaScript code:
     const v9 = console;
     const v10 = v9.log(v8);
 
-Or to the following JavaScript code by inlining intermediate expressions:
+或者转化为下面的JS代码，通过内联中介解释器：
 
     let v3 = 0;
     for (let v4 = 0; v4 < 10; v4++) {
@@ -82,49 +70,58 @@ FuzzIL has a number of properties:
 * The code is in SSA form: every variable is only assigned once. However, variables produced by a `Phi` operation can be reassigned later through a `Copy` operation.
 * Every variable is defined before it is used.
 
-A number of mutations can then be performed on these programs:
+FuzzILli有以下特性：
+* FuzzIL程序是一个简单的指令列表（集合）.
+* 一条FuzzIL指令就是一个操作，它包含input和output变量，可能还有一个或多个参数(在上面的符号中用单引号括起来).
+* 指令的输入永远是变量，并且没有直接数值（immediate values）.
+* IL代码遵循SSA格式：所有变量只assign一次. 然而，由一个 `Phi` 操作产生的变量可以在之后通过一个 `Copy` 操作来 reassign.
+* 所有变量在使用前必须先定义.
 
-* [InputMutator](Sources/Fuzzilli/Mutators/InputMutator.swift): a simple data flow mutation in which an input value of an instruction is replaced by a different one.
-* [CombineMutator](Sources/Fuzzilli/Mutators/CombineMutator.swift) and [SpliceMutator](Sources/Fuzzilli/Mutators/SpliceMutator.swift): these combine multiple programs by inserting (a part of) a program into another one.
-* [InsertionMutator](Sources/Fuzzilli/Mutators/InsertionMutator.swift): generates new code from a list of [predefined code generators](Sources/Fuzzilli/Core/CodeGenerators.swift) at random positions in an existing program.
-* [OperationMutator](Sources/Fuzzilli/Mutators/OperationMutator.swift): mutates the parameters of operations, e.g. replacing an integer constant by a different one.
+
+在执行下列程序后，可以产生一系列突变：
+
+* [InputMutator](Sources/Fuzzilli/Mutators/InputMutator.swift): 一个简单的数据流突变，其中一条指令的input值会被替换成另一个不同的.
+* [CombineMutator](Sources/Fuzzilli/Mutators/CombineMutator.swift) and [SpliceMutator](Sources/Fuzzilli/Mutators/SpliceMutator.swift): 它们通过将一个程序的一部分插入另一个程序来组合多个程序.
+* [InsertionMutator](Sources/Fuzzilli/Mutators/InsertionMutator.swift): 从现有程序的随机位置生成新代码，从[predefined code generators](Sources/Fuzzilli/Core/CodeGenerators.swift)列表中.
+* [OperationMutator](Sources/Fuzzilli/Mutators/OperationMutator.swift): mutates the parameters of operations, e.g. replacing an integer constant by a different one.突变一个操作的参数，比如，替换掉一个integer constant为另外一个.
 * and many more...
 
 ## Implementation
 
-The fuzzer is implemented in [Swift](https://swift.org/), with some parts (e.g. coverage measurements, socket interactions, etc.) implemented in C.
+这个fuzzer主要由 [Swift](https://swift.org/) 实现, 部分(比如coverage measurements, socket interactions等)由 C 实现.
 
 ### Architecture
 
-A fuzzer instance (implemented in [Fuzzer.swift](Sources/Fuzzilli/Fuzzer.swift)) is made up of the following central components:
+A fuzzer instance (implemented in [Fuzzer.swift](Sources/Fuzzilli/Fuzzer.swift)) 由以下主要组件构成:
 
-* [FuzzerCore](Sources/Fuzzilli/Core/FuzzerCore.swift): produces new programs from existing ones by applying [mutations](Sources/Fuzzilli/Mutators). Afterwards executes the produced samples and evaluates them.
-* [ScriptRunner](Sources/Fuzzilli/Execution): executes programs of the target language.
-* [Corpus](Sources/Fuzzilli/Core/Corpus.swift): stores interesting samples and supplies them to the core fuzzer.
+* [FuzzerCore](Sources/Fuzzilli/Core/FuzzerCore.swift): 通过使用[mutations](Sources/Fuzzilli/Mutators) 从现有程序中产生新程序. 之后执行该生成用例并评估.
+* [ScriptRunner](Sources/Fuzzilli/Execution): 执行目标语言的程序.
+* [Corpus](Sources/Fuzzilli/Core/Corpus.swift): 存储有趣的例子，并将它们提供给core fuzzer.
 * [Environment](Sources/Fuzzilli/Core/JavaScriptEnvironment.swift): has knowledge of the runtime environment, e.g. the available builtins, property names, and methods.
-* [Minimizer](Sources/Fuzzilli/Minimization/Minimizer.swift): minimizes crashing and interesting programs.
-* [Evaluator](Sources/Fuzzilli/Evaluation): evaluates whether a sample is interesting according to some metric, e.g. code coverage.
-* [Lifter](Sources/Fuzzilli/Lifting): translates a FuzzIL program to the target language (JavaScript).
+* [Minimizer](Sources/Fuzzilli/Minimization/Minimizer.swift): 最小化crashing和有趣的例子（用例精简？）.
+* [Evaluator](Sources/Fuzzilli/Evaluation): 评估一个用例是否是“有趣的”，通过某些指标，比如代码覆盖率.
+* [Lifter](Sources/Fuzzilli/Lifting): 翻译一个FuzzIL程序为目标语言 (JavaScript).
 
-Furthermore, a number of modules are optionally available:
+此外,许多可用的模块(可选):
 
 * [Statistics](Sources/Fuzzilli/Modules/Statistics.swift): gathers various pieces of statistical information.
 * [NetworkWorker/NetworkMaster](Sources/Fuzzilli/Modules/NetworkSync.swift): synchronize multiple instances over the network.
 * [ThreadWorker/ThreadMaster](Sources/Fuzzilli/Modules/ThreadSync.swift): synchronize multiple instances within the same process.
 * [Storage](Sources/Fuzzilli/Modules/Storage.swift): stores crashing programs to disk.
 
-The fuzzer is event-driven, with most of the interactions between different classes happening through events. Events are dispatched e.g. as a result of a crash or an interesting program being found, a new program being executed, a log message being generated and so on. See [Events.swift](Sources/Fuzzilli/Core/Events.swift) for the full list of events. The event mechanism effectively decouples the various components of the fuzzer and makes it easy to implement additional modules.
+本fuzzer是事件驱动的，类与类之间的大部分交互都是通过事件. 事件被分派，例如由于一个崩溃或一个有趣的程序被发现，一个新程序被执行，一个日志消息被生成等等. 到[Events.swift](Sources/Fuzzilli/Core/Events.swift) 可以查看完整的事件列表. 事件机制有效地解耦了fuzzer的各个组件，使得实现附加模块变得容易.
 
-A FuzzIL program can be built up using a [ProgramBuilder](Sources/Fuzzilli/Core/ProgramBuilder.swift) instance. A ProgramBuilder provides methods to create and append new instructions, append instructions from another program, retrieve existing variables, query the execution context at the current position (e.g. whether it is inside a loop), and more.
+A FuzzIL program can be built up using a [ProgramBuilder](Sources/Fuzzilli/Core/ProgramBuilder.swift) instance. A ProgramBuilder 提供方法来创建和添加新的指令、从另一个程序添加指令、检索现有变量、查询当前位置的执行上下文（比如是否处在一个循环中）等.
 
 ### Execution
 
-The fuzzer supports different modes of execution for the target engines:
+fuzzilli支持不同的模式来执行目标引擎：
 
-* [Forkserver](Sources/Fuzzilli/Execution/Forkserver.swift): similar to [afl](http://lcamtuf.coredump.cx/afl/), this will stop execution in the child process after (parts of) the process initialization are completed, then fork a new child process for every generated sample.
-* [REPRL (read-eval-print-reset-loop)](Sources/Fuzzilli/Execution/REPRL.swift): in this mode the target engine is modified to accept a script over some IPC channel, execute it, then reset its internal state and wait for the next script. This mode tends to be faster.
+* [Forkserver](Sources/Fuzzilli/Execution/Forkserver.swift): 和 [afl](http://lcamtuf.coredump.cx/afl/) 相同, 这将在流程初始化(部分)完成后停止子流程中的执行，然后为每个生成用例派生一个新的子流程.
+* [REPRL (read-eval-print-reset-loop)](Sources/Fuzzilli/Execution/REPRL.swift): 在这种模式下，目标引擎被修改为通过某个IPC通道接受脚本，执行它，然后重置它的内部状态并等待下一个脚本. 这种模式往往更快.
 
-### Scalability
+
+### Scalability 可拓展性
 
 There is one fuzzer instance per target process. This enables synchronous execution of programs and thereby simplifies the implementation of various algorithms such as consecutive mutations and minimization. Moreover, it avoids the need to implement thread-safe access to internal state, e.g. the corpus. Each fuzzer instance has its own dedicated [OperationQueue](https://developer.apple.com/documentation/foundation/operationqueue), conceptually corresponding to a single thread. Every interaction with a fuzzer instance must then happen on the instance’s queue. This guarantees thread-safety as the queue is serial. For more details see [the docs](Docs/ProcessingModel.md).
 
@@ -136,14 +133,14 @@ To scale, fuzzer instances can become workers, in which case they report newly f
 
 This design allows the fuzzer to scale to many cores on a single machine as well as to many different machines. As one master instance can quickly become overloaded if too many workers send programs to it, it is also possible to configure multiple tiers of master instances, e.g. one master instance, 16 intermediate masters connected to the master, and 256 workers connected to the intermediate masters.
 
-## Resources
+## Resources 资源
 
 Further resources about this fuzzer:
 
 * A [presentation](https://saelo.github.io/presentations/offensivecon_19_fuzzilli.pdf) about Fuzzilli given at Offensive Con 2019.
 * The [master's thesis](https://saelo.github.io/papers/thesis.pdf) for which the initial implementation was done.
 
-## Bug Showcase
+## Bug Showcase BUG列表
 
 The following is a list of some of the bugs found with the help of Fuzzilli. Only bugs with security impact are included in the list. Special thanks to all users of Fuzzilli who have reported bugs found by it!
 
