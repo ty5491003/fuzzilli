@@ -73,7 +73,7 @@ FuzzILli有以下特性：
 * [InputMutator](Sources/Fuzzilli/Mutators/InputMutator.swift): 一个简单的数据流突变，其中一条指令的input值会被替换成另一个不同的.
 * [CombineMutator](Sources/Fuzzilli/Mutators/CombineMutator.swift) and [SpliceMutator](Sources/Fuzzilli/Mutators/SpliceMutator.swift): 它们通过将一个程序的一部分插入另一个程序来组合多个程序.
 * [InsertionMutator](Sources/Fuzzilli/Mutators/InsertionMutator.swift): 从现有程序的随机位置生成新代码，从[predefined code generators](Sources/Fuzzilli/Core/CodeGenerators.swift)列表中.
-* [OperationMutator](Sources/Fuzzilli/Mutators/OperationMutator.swift): mutates the parameters of operations, e.g. replacing an integer constant by a different one.突变一个操作的参数，比如，替换掉一个integer constant为另外一个.
+* [OperationMutator](Sources/Fuzzilli/Mutators/OperationMutator.swift): 突变一个操作的参数，比如，替换掉一个integer constant为另外一个.
 * and many more...
 
 ## Implementation
@@ -84,20 +84,20 @@ FuzzILli有以下特性：
 
 A fuzzer instance (implemented in [Fuzzer.swift](Sources/Fuzzilli/Fuzzer.swift)) 由以下主要组件构成:
 
-* [FuzzerCore](Sources/Fuzzilli/Core/FuzzerCore.swift): 通过使用[mutations](Sources/Fuzzilli/Mutators) 从现有程序中产生新程序. 之后执行该生成用例并评估.
-* [ScriptRunner](Sources/Fuzzilli/Execution): 执行目标语言的程序.
-* [Corpus](Sources/Fuzzilli/Core/Corpus.swift): 存储有趣的例子，并将它们提供给core fuzzer.
-* [Environment](Sources/Fuzzilli/Core/JavaScriptEnvironment.swift): has knowledge of the runtime environment, e.g. the available builtins, property names, and methods.
-* [Minimizer](Sources/Fuzzilli/Minimization/Minimizer.swift): 最小化crashing和有趣的例子（用例精简？）.
-* [Evaluator](Sources/Fuzzilli/Evaluation): 评估一个用例是否是“有趣的”，通过某些指标，比如代码覆盖率.
-* [Lifter](Sources/Fuzzilli/Lifting): 翻译一个FuzzIL程序为目标语言 (JavaScript).
+* [FuzzerCore](Sources/Fuzzilli/Core/FuzzerCore.swift)(Sources/Fuzzilli/Core/FuzzerCore.swift): 通过使用[mutations](Sources/Fuzzilli/Mutators) 从现有程序中产生新程序. 之后执行该生成用例并评估.
+* [ScriptRunner](Sources/Fuzzilli/Execution)(Sources/Fuzzilli/Execution): 执行目标语言的程序.
+* [Corpus](Sources/Fuzzilli/Core/Corpus.swift)(Sources/Fuzzilli/Core/Corpus.swift): 存储有趣的例子，并将它们提供给core fuzzer.
+* [Environment](Sources/Fuzzilli/Core/JavaScriptEnvironment.swift)(Sources/Fuzzilli/Core/JavaScriptEnvironment.swift): has knowledge of the runtime environment, e.g. the available builtins, property names, and methods.
+* [Minimizer](Sources/Fuzzilli/Minimization/Minimizer.swift)(Sources/Fuzzilli/Minimization/Minimizer.swift): 最小化crashing和有趣的例子（用例精简？）.
+* [Evaluator](Sources/Fuzzilli/Evaluation)(Sources/Fuzzilli/Evaluation): 评估一个用例是否是“有趣的”，通过某些指标，比如代码覆盖率.
+* [Lifter](Sources/Fuzzilli/Lifting)(Sources/Fuzzilli/Lifting): 翻译一个FuzzIL程序为目标语言 (JavaScript).
 
 此外,许多可用的模块(可选):
 
-* [Statistics](Sources/Fuzzilli/Modules/Statistics.swift): gathers various pieces of statistical information.
-* [NetworkWorker/NetworkMaster](Sources/Fuzzilli/Modules/NetworkSync.swift): synchronize multiple instances over the network.
-* [ThreadWorker/ThreadMaster](Sources/Fuzzilli/Modules/ThreadSync.swift): synchronize multiple instances within the same process.
-* [Storage](Sources/Fuzzilli/Modules/Storage.swift): stores crashing programs to disk.
+* [Statistics](Sources/Fuzzilli/Modules/Statistics.swift)(Sources/Fuzzilli/Modules/Statistics.swift): gathers various pieces of statistical information.
+* [NetworkWorker/NetworkMaster](Sources/Fuzzilli/Modules/NetworkSync.swift)(Sources/Fuzzilli/Modules/NetworkSync.swift): synchronize multiple instances over the network.
+* [ThreadWorker/ThreadMaster](Sources/Fuzzilli/Modules/ThreadSync.swift)(Sources/Fuzzilli/Modules/ThreadSync.swift): synchronize multiple instances within the same process.
+* [Storage](Sources/Fuzzilli/Modules/Storage.swift)(Sources/Fuzzilli/Modules/Storage.swift): stores crashing programs to disk.
 
 本fuzzer是事件驱动的，类与类之间的大部分交互都是通过事件. 事件被分派，例如由于一个崩溃或一个有趣的程序被发现，一个新程序被执行，一个日志消息被生成等等. 到[Events.swift](Sources/Fuzzilli/Core/Events.swift) 可以查看完整的事件列表. 事件机制有效地解耦了fuzzer的各个组件，使得实现附加模块变得容易.
 
