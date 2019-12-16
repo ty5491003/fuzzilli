@@ -1,7 +1,5 @@
 # Fuzzilli
 
-A (coverage-)guided fuzzer for dynamic language interpreters based on a custom intermediate language ("FuzzIL") which can be mutated and translated to JavaScript.
-
 一个以覆盖率为指导的动态语言解释器，它基于一个传统的中介语言“FuzzILli”，该语言能对JavaScript进行mutate和translate.
 
 ## Usage
@@ -62,14 +60,6 @@ A (coverage-)guided fuzzer for dynamic language interpreters based on a custom i
     }
     console.log("Result: " + v3);
 
-FuzzIL has a number of properties:
-
-* A FuzzIL program is simply a list of instructions.
-* A FuzzIL instruction is an operation together with input and output variables and potentially one or more parameters (enclosed in single quotes in the notation above).
-* Inputs to instructions are always variables, there are no immediate values.
-* The code is in SSA form: every variable is only assigned once. However, variables produced by a `Phi` operation can be reassigned later through a `Copy` operation.
-* Every variable is defined before it is used.
-
 FuzzILli有以下特性：
 * FuzzIL程序是一个简单的指令列表（集合）.
 * 一条FuzzIL指令就是一个操作，它包含input和output变量，可能还有一个或多个参数(在上面的符号中用单引号括起来).
@@ -124,6 +114,8 @@ fuzzilli支持不同的模式来执行目标引擎：
 ### Scalability 可拓展性
 
 There is one fuzzer instance per target process. This enables synchronous execution of programs and thereby simplifies the implementation of various algorithms such as consecutive mutations and minimization. Moreover, it avoids the need to implement thread-safe access to internal state, e.g. the corpus. Each fuzzer instance has its own dedicated [OperationQueue](https://developer.apple.com/documentation/foundation/operationqueue), conceptually corresponding to a single thread. Every interaction with a fuzzer instance must then happen on the instance’s queue. This guarantees thread-safety as the queue is serial. For more details see [the docs](Docs/ProcessingModel.md).
+
+
 
 To scale, fuzzer instances can become workers, in which case they report newly found interesting samples and crashes to a master instance. In turn, the master instances also synchronize their corpus with the workers. Communication between masters and workers can happen in different ways, each implemented as a module:
 
